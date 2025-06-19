@@ -20,4 +20,4 @@ def main() -> list[str]:
 
 
 if __name__ == "__main__":
-    main()
+    main.serve(name="my-first-deployment")
