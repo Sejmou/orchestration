@@ -20,4 +20,7 @@ def main() -> list[str]:
 
 
 if __name__ == "__main__":
-    main.serve(name="my-first-deployment")
+    main.serve(
+        name="my-first-deployment",
+        cron="0 8 * * *"  # Run every day at 8:00 AM
+    )
