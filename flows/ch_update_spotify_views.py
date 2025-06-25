@@ -21,7 +21,7 @@ def update_spotify_views():
         "spotify.top_unknown_track_ids_de_at_ch_by_streams_mv",
     ]
     for view in views:
-        update_refreshable_materialized_view(client, view)
+        update_refreshable_materialized_view(view)
 
 
 @task(log_prints=True)
