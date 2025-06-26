@@ -1,5 +1,6 @@
 from typing import Literal
 from prefect import flow, task
+from prefect.blocks.system import Secret
 import sys
 import os
 
@@ -14,7 +15,7 @@ def copy_table(
     db: str,
     table: str,
     source_native_port: int = 9000,
-    # the data_view_name will be used to check row counts
+    # if provided, the data_view_name will be used to compare row counts
     data_view_name: str | None = None,
     has_observed_at: bool = False,
 ):
@@ -100,6 +101,10 @@ def copy_table(
 @flow(log_prints=True)
 def copy_table_flow(database: str, table_name: str):
     etl_creds: ClickHouseCredentials = ClickHouseCredentials.load("clickhouse-etl-config")  # type: ignore
+    # NOTE: need to use public IP of the ETL ClickHouse server for this task
+    # (copy sql query is executed from ClickHouse on Kubernetes which doesn't have access to the private IP of the ETL server which is stored in the secret)
+    ch_etl_public_ip = Secret.load("clickhouse-etl-public-ip")
+    etl_creds.host = ch_etl_public_ip.get()
     etl_client = create_client(etl_creds)
 
     k8s_creds: ClickHouseCredentials = ClickHouseCredentials.load("clickhouse-k8s-config")  # type: ignore
