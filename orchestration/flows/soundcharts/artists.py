@@ -1,8 +1,8 @@
 from prefect import flow, task
 from soundcharts.client import SoundchartsClient
-from utils.scraping import fetch_and_upload_data
+from orchestration.utils.scraping import fetch_and_upload_data
 from prefect.runtime import flow_run
-from apis.soundcharts import SoundChartsCredentials, create_client
+from orchestration.apis.soundcharts import SoundChartsCredentials, create_client
 
 sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ignore
 

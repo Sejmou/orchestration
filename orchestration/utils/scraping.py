@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 from prefect import task
 from prefect_aws import S3Bucket
-from utils.zstd import compress_file
+from orchestration.utils.zstd import compress_file
 import os
 
 DATA_DIR = "/tmp/prefect_task_data"

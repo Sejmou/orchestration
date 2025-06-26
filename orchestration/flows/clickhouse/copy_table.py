@@ -5,7 +5,11 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from store_ch_secrets import ClickHouseCredentials, create_client, ClickHouseClient
+from orchestration.databases.clickhouse import (
+    ClickHouseCredentials,
+    create_client,
+    ClickHouseClient,
+)
 
 
 def copy_table(
@@ -109,7 +113,7 @@ def copy_table_flow(
     # NOTE: need to use public IP of the ETL ClickHouse server for this task
     # (copy sql query is executed from ClickHouse on Kubernetes which doesn't have access to the private IP of the ETL server which is stored in the secret)
     ch_etl_public_ip = Secret.load("clickhouse-etl-public-ip")
-    etl_creds.host = ch_etl_public_ip.get()
+    etl_creds.host = ch_etl_public_ip.get()  # type: ignore
     etl_client = create_client(etl_creds)
 
     k8s_creds: ClickHouseCredentials = ClickHouseCredentials.load("clickhouse-k8s-config")  # type: ignore

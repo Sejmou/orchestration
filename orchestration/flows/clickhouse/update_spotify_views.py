@@ -3,7 +3,10 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from store_ch_secrets import ClickHouseCredentials, create_client, ClickHouseClient
+from orchestration.databases.clickhouse import (
+    ClickHouseCredentials,
+    create_client,
+)
 
 
 @flow()
