@@ -2,8 +2,9 @@ from prefect import flow, task
 from soundcharts.client import SoundchartsClient
 from utils.scraping import fetch_and_upload_data
 from prefect.runtime import flow_run
+from apis.soundcharts import SoundChartsCredentials, create_client
 
-sc = SoundchartsClient(app_id="your_app_id", api_key="your_api_key")
+sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ignore
 
 
 @task(name="Fetch metadata for SoundCharts artist UUID")

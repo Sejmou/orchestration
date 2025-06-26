@@ -41,7 +41,7 @@ def _fetch_and_write_data[
 
     fetched_data_fp = os.path.join(flow_run_data_dir, "fetched.jsonl")
 
-    with open(processed_inputs_fp) as f_in:
+    with open(processed_inputs_fp, "a") as f_in:
         with open(fetched_data_fp, "a") as f_out:
             for input_el in inputs:
                 fetched_data = fetch_fn(input_el)
