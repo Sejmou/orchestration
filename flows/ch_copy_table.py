@@ -99,7 +99,12 @@ def copy_table(
 
 
 @flow(log_prints=True)
-def copy_table_flow(database: str, table_name: str):
+def copy_table_flow(
+    database: str,
+    table_name: str,
+    view_name: str | None = None,
+    has_observed_at: bool = False,
+):
     etl_creds: ClickHouseCredentials = ClickHouseCredentials.load("clickhouse-etl-config")  # type: ignore
     # NOTE: need to use public IP of the ETL ClickHouse server for this task
     # (copy sql query is executed from ClickHouse on Kubernetes which doesn't have access to the private IP of the ETL server which is stored in the secret)
@@ -118,8 +123,8 @@ def copy_table_flow(database: str, table_name: str):
         db=database,
         table=table_name,
         source_native_port=9000,
-        data_view_name=None,  # Set to None if not using a data view
-        has_observed_at=False,  # Set to True if the table has an 'observed_at' column
+        data_view_name=view_name,
+        has_observed_at=has_observed_at,
     )
 
 
