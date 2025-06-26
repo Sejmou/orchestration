@@ -16,7 +16,7 @@ def fetch_artist_metadata(artist_uuid: str):
     return metadata
 
 
-@flow()
+@flow(name="Fetch metadata for artist UUIDs", log_prints=True)
 def fetch_metadata_for_artists(artist_uuids: list[str]):
     flow_run_id = flow_run.get_id()
     if not flow_run_id:

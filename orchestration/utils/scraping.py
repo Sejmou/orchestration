@@ -89,3 +89,6 @@ def fetch_and_upload_data[
         f"{s3_prefix}/{output_last_modified.strftime('%Y-%m-%d_%H-%M-%S')}.jsonl.zst"
     )
     _compress_and_upload_file(output_file, bucket, s3_key=s3_key)
+
+    # if this is reached, we know that everything has gone well and we can delete any remaining files
+    os.remove(flow_run_data_dir)
