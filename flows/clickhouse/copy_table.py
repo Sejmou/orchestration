@@ -130,9 +130,3 @@ def copy_table_flow(
 
 if __name__ == "__main__":
     copy_table_flow.serve()
-    # update_spotify_views.deploy(
-    #     name="Update Spotify Views",
-    #     work_pool_name="Docker",
-    #     image="my_registry/my_image:my_image_tag",
-    #     push=False,
-    # )
