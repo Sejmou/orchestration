@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "clickhouse-connect>=0.8.18",
+    "pandas>=2.3.0",
     "prefect>=3.4.6",
     "prefect-aws>=0.5.10",
     "prefect-docker>=0.6.6",
