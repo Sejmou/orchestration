@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 from prefect.blocks.core import Block
+from prefect.blocks.system import Secret
 from pydantic import SecretStr
 import clickhouse_connect
 from clickhouse_connect.driver.client import Client as ClickHouseClient
@@ -62,6 +63,13 @@ def store_clickhouse_secrets():
         )
     clickhouse_k8s_config.save("clickhouse-k8s-config", overwrite=True)
     print("ClickHouse Kubernetes configuration stored successfully.")
+
+    # ETL -> K8S copy tasks require public IP of the ETL ClickHouse server
+    ch_etl_public_ip = os.environ["CLICKHOUSE_ETL_PUBLIC_IP"]
+    Secret(value=SecretStr(ch_etl_public_ip)).save(
+        "clickhouse-etl-public-ip", overwrite=True
+    )
+    print("ClickHouse ETL public IP stored successfully as a Prefect secret.")
 
 
 if __name__ == "__main__":
