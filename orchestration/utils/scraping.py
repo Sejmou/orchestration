@@ -45,6 +45,11 @@ def _fetch_and_write_data[
         with open(fetched_data_fp, "a") as f_out:
             for input_el in inputs:
                 fetched_data = fetch_fn(input_el)
+                if fetched_data is None:
+                    print(f"No data for input {input_el}")
+                    f_in.write(str(input_el) + "\n")
+                    f_in.flush()
+                    continue
                 data_to_write = _preprocess_for_write(fetched_data)
                 if isinstance(data_to_write, list):
                     for item in data_to_write:
