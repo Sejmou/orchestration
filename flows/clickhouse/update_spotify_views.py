@@ -3,7 +3,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from orchestration.databases.clickhouse import (
+from utils.databases.clickhouse import (
     ClickHouseCredentials,
     create_client,
 )

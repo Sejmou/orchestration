@@ -1,13 +1,9 @@
 from typing import Literal
 from prefect import flow, task
-import sys
-import os
 from time import time
 from jinja2 import Environment, StrictUndefined
 from pydantic import BaseModel
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from orchestration.databases.clickhouse import (
+from utils.databases.clickhouse import (
     ClickHouseCredentials,
     create_client,
 )

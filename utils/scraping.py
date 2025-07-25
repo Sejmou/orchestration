@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 from prefect import task
 from prefect_aws import S3Bucket
-from orchestration.utils.zstd import compress_file
+from utils.zstd import compress_file
 import os
 
 DATA_DIR = "/tmp/prefect_task_data"
@@ -24,9 +24,9 @@ def _preprocess_for_write(data) -> dict | list:
 
 
 @task(name="Fetch data and write to file")
-def _fetch_and_write_data[
-    T
-](inputs: list[T], fetch_fn: Callable[[T], Any], flow_run_data_dir: str):
+def _fetch_and_write_data[T](
+    inputs: list[T], fetch_fn: Callable[[T], Any], flow_run_data_dir: str
+):
     processed_inputs_fp = os.path.join(flow_run_data_dir, "processed_inputs.txt")
     inputs_len_initial = len(inputs)
     print(f"Got {inputs_len_initial} inputs")
@@ -74,9 +74,9 @@ def _compress_and_upload_file(file_path: str, bucket: S3Bucket, s3_key: str):
     return compressed_path
 
 
-def fetch_and_upload_data[
-    T
-](flow_run_id: str, inputs: list[T], fetch_fn: Callable[[T], Any], s3_prefix: str):
+def fetch_and_upload_data[T](
+    flow_run_id: str, inputs: list[T], fetch_fn: Callable[[T], Any], s3_prefix: str
+):
     bucket = S3Bucket.load("s3-bucket")
 
     flow_run_data_dir = os.path.join(DATA_DIR, flow_run_id)
