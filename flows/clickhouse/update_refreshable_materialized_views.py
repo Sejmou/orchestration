@@ -33,9 +33,3 @@ def update_refreshable_materialized_view(view_name: str):
 
 if __name__ == "__main__":
     refresh_views.serve()
-    # refresh_views.deploy(
-    #     name="Refresh ClickHouse Views",
-    #     work_pool_name="Docker",
-    #     image="my_registry/my_image:my_image_tag",
-    #     push=False,
-    # )
