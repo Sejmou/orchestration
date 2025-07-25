@@ -4,6 +4,8 @@ from prefect.blocks.system import Secret
 import sys
 import os
 
+from utils.flow_deployment import create_image_config
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.databases.clickhouse import (
     ClickHouseCredentials,
@@ -133,4 +135,8 @@ def copy_table_flow(
 
 
 if __name__ == "__main__":
-    copy_table_flow.serve()
+    copy_table_flow.deploy(
+        "Copy ClickHouse table",
+        work_pool_name="Docker",
+        image=create_image_config("clickhouse-copy-table", "v1.0"),
+    )

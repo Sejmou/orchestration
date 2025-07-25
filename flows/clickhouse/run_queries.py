@@ -3,6 +3,7 @@ from prefect import flow, task
 from time import time
 from jinja2 import Environment, StrictUndefined
 from pydantic import BaseModel
+
 from utils.flow_deployment import create_image_config
 from utils.databases.clickhouse import (
     ClickHouseCredentials,

@@ -1,7 +1,9 @@
 from prefect import flow, task
 from utils.scraping import fetch_and_upload_data
 from prefect.runtime import flow_run
+
 from utils.apis.soundcharts import SoundChartsCredentials, create_client
+from utils.flow_deployment import create_image_config
 
 sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ignore
 
@@ -31,4 +33,8 @@ def fetch_metadata_for_artists(artist_uuids: list[str]):
 
 
 if __name__ == "__main__":
-    fetch_metadata_for_artists.serve()
+    fetch_metadata_for_artists.deploy(
+        "Fetch SoundCharts artist metadata by UUID",
+        work_pool_name="Docker",
+        image=create_image_config("soundcharts-artists-by-uuid", "v1.0"),
+    )

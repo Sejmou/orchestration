@@ -1,12 +1,10 @@
 from prefect import flow, task
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.databases.clickhouse import (
     ClickHouseCredentials,
     create_client,
 )
+from utils.flow_deployment import create_image_config
 
 
 @flow()
@@ -32,4 +30,8 @@ def update_refreshable_materialized_view(view_name: str):
 
 
 if __name__ == "__main__":
-    refresh_views.serve()
+    refresh_views.deploy(
+        "Refresh ClickHouse materialized views",
+        work_pool_name="Docker",
+        image=create_image_config("clickhouse-refresh-views", "v1.0"),
+    )
