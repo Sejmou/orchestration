@@ -3,6 +3,7 @@ from prefect import flow, task
 from time import time
 from jinja2 import Environment, StrictUndefined
 from pydantic import BaseModel
+from utils.flow_deployment import create_image_config
 from utils.databases.clickhouse import (
     ClickHouseCredentials,
     create_client,
@@ -45,10 +46,8 @@ def run_queries(query_templates: list[QueryMeta], server: Literal["etl", "k8s"])
 
 
 if __name__ == "__main__":
-    run_queries.serve()
-    # for deployment, run this on the x86 machines where the worker should be built and running - cannot run this on my ARM MacBook as the image would be built for ARM
-    # run_queries.deploy(
-    #     "Run ClickHouse queries with Jinja template syntax support",
-    #     work_pool_name="my-docker-pool",
-    #     image="sejmou/sejmou-private:clickhouse-queries-v1.0",
-    # )
+    run_queries.deploy(
+        "Run ClickHouse queries with Jinja template syntax support",
+        work_pool_name="Docker",
+        image=create_image_config("clickhouse-run-queries", "v1.0"),
+    )
