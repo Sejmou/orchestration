@@ -1,12 +1,9 @@
 from typing import Literal
-from prefect import flow, task
+from prefect import flow
 from prefect.blocks.system import Secret
-import sys
-import os
+from pydantic import BaseModel
 
 from utils.flow_deployment import create_image_config
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.databases.clickhouse import (
     ClickHouseCredentials,
     create_client,
@@ -14,7 +11,14 @@ from utils.databases.clickhouse import (
 )
 
 
-def copy_table(
+class CopyTableParams(BaseModel):
+    database: str
+    table_name: str
+    view_name: str | None = None
+    has_observed_at: bool = False
+
+
+def _copy_table(
     source_client: ClickHouseClient,
     source_creds: ClickHouseCredentials,
     target_client: ClickHouseClient,
@@ -122,7 +126,7 @@ def copy_table_flow(
     k8s_client = create_client(k8s_creds)
 
     print(f"Copying table: {table_name}")
-    copy_table(
+    _copy_table(
         source_client=etl_client,
         source_creds=etl_creds,
         target_client=k8s_client,
@@ -138,5 +142,5 @@ if __name__ == "__main__":
     copy_table_flow.deploy(
         "Copy ClickHouse table",
         work_pool_name="Docker",
-        image=create_image_config("clickhouse-copy-table", "v1.0"),
+        image=create_image_config("clickhouse-copy-table", "v1.1"),
     )
