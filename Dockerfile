@@ -1,33 +1,36 @@
-# Adapted from https://github.com/astral-sh/uv-docker-example/blob/main/Dockerfile
-# NOTE: the multi-stage build version with smaller final image (https://github.com/astral-sh/uv-docker-example/blob/main/multistage.Dockerfile)
-# is NOT usable with the deploy() command (using this Dockerfile as base image) for prefect v3 flows (prefect.utilities.dockerutils.BuildError: the --mount option requires BuildKit. Refer to https://docs.docker.com/go/buildkit/ to learn how to build images with BuildKit enabled)
+# Code adapted from https://github.com/astral-sh/uv-docker-example/blob/main/multistage.Dockerfile
+# NOTE: --mount relies on BuildKit which is NOT usable with the deploy() command (using this Dockerfile as base image) for prefect v3 flows (prefect.utilities.dockerutils.BuildError: the --mount option requires BuildKit. Refer to https://docs.docker.com/go/buildkit/ to learn how to build images with BuildKit enabled)
 # IIUC, this is due to a limitation of an underlying dependency: https://github.com/PrefectHQ/prefect/issues/12922
-# Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+# Therefore, I piped the original code through an AI and had it genereate a new Dockerfile that does not use --mount, but instead uses COPY to copy the files into the image.
+# ---- Stage 1: builder ----
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+ENV UV_PYTHON_DOWNLOADS=0
 
-# Install the project into `/app`
 WORKDIR /app
 
-# Enable bytecode compilation
-ENV UV_COMPILE_BYTECODE=1
+# Step 1: Copy only dependency files first (for Docker cache optimization)
+COPY pyproject.toml uv.lock ./
 
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
+# Step 2: Install dependencies *only* (won't trigger cache bust if code changes)
+RUN uv sync --locked --no-install-project --no-dev
 
-# Install the project's dependencies using the lockfile and settings
-RUN --mount=type=cache,target=/root/.cache/uv \
-  --mount=type=bind,source=uv.lock,target=uv.lock \
-  --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-  uv sync --locked --no-install-project --no-dev
+# Step 3: Copy the rest of the project (your source code, etc.)
+COPY . .
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --locked --no-dev
+# Step 4: Install your code as a package with dependencies (no dev)
+RUN uv sync --locked --no-dev
 
-# Place executables in the environment at the front of the path
+# ---- Stage 2: final ----
+FROM python:3.13-slim-bookworm
+
+WORKDIR /app
+
+# Step 5: Copy the built virtualenv and source from builder
+COPY --from=builder /app /app
+
+# Optional: You can create and use a non-root user here, or stick with root as needed.
+
+# Step 6: Place executables at front of PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT []
