@@ -6,7 +6,7 @@ from prefect_aws import S3Bucket
 from utils.zstd import compress_file
 import os
 
-DATA_DIR = "/tmp/prefect_task_data"
+DATA_DIR = "./tmp/prefect_task_data"
 
 
 def _preprocess_for_write(data) -> dict | list:

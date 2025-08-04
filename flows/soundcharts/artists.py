@@ -28,13 +28,13 @@ def fetch_metadata_for_artists(artist_uuids: list[str]):
         inputs=artist_uuids,
         fetch_fn=fetch_artist_metadata,
         flow_run_id=flow_run_id,
-        s3_prefix="soundcharts/artists",
+        s3_prefix="soundcharts/raw-api-data-by-endpoint-and-version/artist/v2.9",
     )
 
 
 if __name__ == "__main__":
     fetch_metadata_for_artists.deploy(
-        "Fetch SoundCharts artist metadata by UUID",
+        "Fetch SoundCharts artist metadata for UUIDs",
         work_pool_name="Docker",
-        image=create_image_config("soundcharts-artists-by-uuid", "v1.0"),
+        image=create_image_config("soundcharts-artist", "v1.1"),
     )

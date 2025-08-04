@@ -37,13 +37,13 @@ def fetch_artists_by_platform_ids(platform: str, identifiers: list[str | int]):
             platform=platform, identifier=identifier
         ),
         flow_run_id=flow_run_id,
-        s3_prefix="soundcharts/artists/by_platform_id",
+        s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/by-platform/{platform}/v2.9",
     )
 
 
 if __name__ == "__main__":
     fetch_artists_by_platform_ids.deploy(
-        "Fetch SoundCharts artist metadata by platform ID",
+        "Fetch SoundCharts artist metadata for platform IDs",
         work_pool_name="Docker",
-        image=create_image_config("soundcharts-artists-by-platform-id", "v1.0"),
+        image=create_image_config("soundcharts-artist-by-platform", "v1.1"),
     )
