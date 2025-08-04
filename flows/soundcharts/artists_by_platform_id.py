@@ -8,10 +8,10 @@ from utils.flow_deployment import create_image_config
 sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ignore
 
 
-@task(name="Fetch SoundChart artist metadata by platform ID")
+@task(name="sc-artist-by-platform-id")
 def fetch_soundchart_artist_by_platform_id(platform: str, identifier: str | int):
     """
-    Fetches metadata for a single artist using their UUID.
+    Fetches metadata for a single artist using an ID from another platform.
     """
     metadata = sc.artist.get_artist_by_platform_id(platform, identifier)
     if metadata == {}:
@@ -23,7 +23,7 @@ def fetch_soundchart_artist_by_platform_id(platform: str, identifier: str | int)
     return metadata
 
 
-@flow(name="Fetch metadata for artists by platform ID", log_prints=True)
+@flow(name="sc-artists-by-platform-id", log_prints=True)
 def fetch_artists_by_platform_ids(platform: str, identifiers: list[str | int]):
     flow_run_id = flow_run.get_id()
     if not flow_run_id:
@@ -42,8 +42,9 @@ def fetch_artists_by_platform_ids(platform: str, identifiers: list[str | int]):
 
 
 if __name__ == "__main__":
+    # deploy flow so that it becomes available via API and runs can be submitted
     fetch_artists_by_platform_ids.deploy(
-        "Fetch SoundCharts artist metadata for platform IDs",
+        "api",
         work_pool_name="Docker",
-        image=create_image_config("soundcharts-artist-by-platform", "v1.1"),
+        image=create_image_config("sc-artists-by-platform-id", "v1.0"),
     )
