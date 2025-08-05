@@ -8,7 +8,6 @@ from utils.flow_deployment import create_image_config
 sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ignore
 
 
-@task(name="sc-artist")
 def fetch_artist_metadata(artist_uuid: str):
     """
     Fetches metadata for a single artist using their UUID.
@@ -37,5 +36,5 @@ if __name__ == "__main__":
     fetch_metadata_for_artists.deploy(
         "api",
         work_pool_name="Docker",
-        image=create_image_config("sc-artists", "v1.1"),
+        image=create_image_config("sc-artists", "v1.2"),
     )

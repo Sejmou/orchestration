@@ -13,7 +13,6 @@ sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ig
 type SupportedPlatform = Literal["spotify", "youtube"]
 
 
-@task(name="sc-artist-local-streaming-audience", log_prints=True)
 def fetch_artist_local_streaming_audience(
     artist_uuid: str, platform: SupportedPlatform, start_date: date, end_date: date
 ):
@@ -63,5 +62,5 @@ if __name__ == "__main__":
     fetch_local_streaming_audience_for_artists.deploy(
         "api",
         work_pool_name="Docker",
-        image=create_image_config("sc-artists-local-streaming-audience", "v1.1"),
+        image=create_image_config("sc-artists-local-streaming-audience", "v1.2"),
     )

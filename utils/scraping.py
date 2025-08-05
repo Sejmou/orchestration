@@ -5,6 +5,7 @@ from prefect import task
 from prefect_aws import S3Bucket
 import os
 import shutil
+import time
 
 from utils.zstd import compress_file
 from utils.public_ip import get_public_ip
@@ -26,7 +27,55 @@ def _preprocess_for_write(data) -> dict | list:
     return data
 
 
-@task(name="Fetch data and write to file")
+def compute_eta_seconds(
+    start_time: float, processed_count: int, total: int
+) -> float | None:
+    """
+    Compute estimated remaining time (ETA) in seconds.
+
+    Args:
+        start_time: The timestamp (in seconds) when processing started (e.g., from time.time()).
+        processed_count: The number of items processed so far.
+        total: The total number of items to process.
+
+    Returns:
+        Estimated remaining time in seconds, or None if progress cannot be determined yet (e.g., if no items have been processed).
+    """
+    if processed_count <= 0 or total <= 0:
+        return
+    if processed_count > total:
+        # this should not be possible, but don't raise Exception if it happens; instead, exit early
+        print("Processed count exceeds total count, cannot compute ETA.")
+        return
+
+    elapsed = time.time() - start_time
+    progress = processed_count / total
+
+    if progress == 0:
+        return
+
+    eta_seconds = (elapsed / progress) - elapsed
+    return max(0.0, eta_seconds)  # avoid negative ETA
+
+
+def eta_str(seconds: float | None) -> str:
+    if seconds is None:
+        return "N/A"
+    seconds = int(seconds)
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0 or hours > 0:  # show minutes if hours or minutes exist
+        parts.append(f"{minutes}m")
+    parts.append(f"{seconds}s")
+
+    return " ".join(parts)
+
+
+@task(log_prints=True)
 def _fetch_and_write_data[T](
     inputs: list[T], fetch_fn: Callable[[T], Any], flow_run_data_dir: str
 ):
@@ -44,9 +93,13 @@ def _fetch_and_write_data[T](
 
     fetched_data_fp = os.path.join(flow_run_data_dir, "fetched.jsonl")
 
+    start = time.time()
+    last_log = start
+    total = len(inputs)
     with open(processed_inputs_fp, "a") as f_in:
         with open(fetched_data_fp, "a") as f_out:
-            for input_el in inputs:
+            for i, input_el in enumerate(inputs):
+                item_no = i + 1
                 fetched_data = fetch_fn(input_el)
                 if fetched_data is None:
                     print(f"No data for input {input_el}")
@@ -63,8 +116,17 @@ def _fetch_and_write_data[T](
                 f_in.write(str(input_el) + "\n")
                 f_in.flush()
 
+                now = time.time()
+                if now - last_log > 20 or i == total:
+                    percent = 100 * i / total
+                    eta = eta_str(
+                        compute_eta_seconds(start, processed_count=item_no, total=total)
+                    )
+                    print(f"Progress: {i}/{total} ({percent:.1f}%), ETA: {eta}")
+                    last_log = now
 
-@task(name="Compress with zstd and upload to S3")
+
+@task(log_prints=True)
 def _compress_and_upload_file(file_path: str, bucket: S3Bucket, s3_key: str):
     compressed_path = compress_file(file_path, remove_input_file=True)
     bucket.upload_from_path(
@@ -77,11 +139,12 @@ def _compress_and_upload_file(file_path: str, bucket: S3Bucket, s3_key: str):
     return compressed_path
 
 
+@task(log_prints=True)
 def fetch_and_upload_data[T](
     flow_run_id: str, inputs: list[T], fetch_fn: Callable[[T], Any], s3_prefix: str
 ):
     public_ip = get_public_ip()
-    bucket = S3Bucket.load("s3-bucket")
+    bucket: S3Bucket = S3Bucket.load("s3-bucket")  # type: ignore
 
     flow_run_data_dir = os.path.join(DATA_DIR, flow_run_id)
     if not os.path.exists(flow_run_data_dir):
