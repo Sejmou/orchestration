@@ -5,6 +5,7 @@ from prefect import task
 from prefect_aws import S3Bucket
 from utils.zstd import compress_file
 import os
+import shutil
 
 DATA_DIR = "./tmp/prefect_task_data"
 
@@ -96,4 +97,4 @@ def fetch_and_upload_data[T](
     _compress_and_upload_file(output_file, bucket, s3_key=s3_key)
 
     # if this is reached, we know that everything has gone well and we can delete any remaining files
-    os.remove(flow_run_data_dir)
+    shutil.rmtree(flow_run_data_dir)
