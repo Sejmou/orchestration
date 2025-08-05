@@ -4,8 +4,9 @@ from flows.clickhouse.copy_data import copy_data_flow, CopyDataParams
 from utils.flow_deployment import create_image_config
 
 copy_data_flow.deploy(
-    "Copy (Update) Spotify track ID meta DE",
+    "sc-artist-uuid-to-sp-id-matching",
     work_pool_name="Docker",
+    tags=["SoundCharts", "Spotify"],
     image=create_image_config("clickhouse-copy-data", "v1.0"),
     schedule=Schedule(
         cron="10 7 * * *",
