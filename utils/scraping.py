@@ -3,9 +3,11 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 from prefect import task
 from prefect_aws import S3Bucket
-from utils.zstd import compress_file
 import os
 import shutil
+
+from utils.zstd import compress_file
+from utils.public_ip import get_public_ip
 
 DATA_DIR = "./tmp/prefect_task_data"
 
@@ -78,6 +80,7 @@ def _compress_and_upload_file(file_path: str, bucket: S3Bucket, s3_key: str):
 def fetch_and_upload_data[T](
     flow_run_id: str, inputs: list[T], fetch_fn: Callable[[T], Any], s3_prefix: str
 ):
+    public_ip = get_public_ip()
     bucket = S3Bucket.load("s3-bucket")
 
     flow_run_data_dir = os.path.join(DATA_DIR, flow_run_id)
@@ -91,9 +94,7 @@ def fetch_and_upload_data[T](
     output_last_modified = datetime.fromtimestamp(
         os.path.getmtime(output_file), tz=timezone.utc
     )
-    s3_key = (
-        f"{s3_prefix}/{output_last_modified.strftime('%Y-%m-%d_%H-%M-%S')}.jsonl.zst"
-    )
+    s3_key = f"{s3_prefix}/{output_last_modified.strftime('%Y-%m-%d_%H-%M-%S')}_{public_ip}_{flow_run_id}.jsonl.zst"
     _compress_and_upload_file(output_file, bucket, s3_key=s3_key)
 
     # if this is reached, we know that everything has gone well and we can delete any remaining files
