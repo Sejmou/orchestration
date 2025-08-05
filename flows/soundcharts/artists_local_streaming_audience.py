@@ -19,6 +19,8 @@ def fetch_artist_local_streaming_audience(
 ):
     """
     Fetches a SoundCharts artists' local streaming audience over time for a specific platform (e.g. top Spotify listeners by region and country if `platform='spotify'`).
+
+    API docs: https://doc.api.soundcharts.com/documentation/reference/artist/get-local-streaming-audience
     """
     try:
         metadata = sc.artist.get_local_streaming_audience(
@@ -52,7 +54,7 @@ def fetch_local_streaming_audience_for_artists(
             uuid, platform=platform, start_date=start_date, end_date=end_date
         ),
         flow_run_id=flow_run_id,
-        s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/streaming/{platform}",
+        s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/streaming/{platform}/v2",
     )
 
 
