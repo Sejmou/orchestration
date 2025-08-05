@@ -13,20 +13,25 @@ sc = create_client(SoundChartsCredentials.load("soundcharts-creds"))  # type: ig
 type SupportedPlatform = Literal["spotify", "youtube"]
 
 
-@task(name="sc-artist-local-streaming-audience")
+@task(name="sc-artist-local-streaming-audience", log_prints=True)
 def fetch_artist_local_streaming_audience(
     artist_uuid: str, platform: SupportedPlatform, start_date: date, end_date: date
 ):
     """
     Fetches a SoundCharts artists' local streaming audience over time for a specific platform (e.g. top Spotify listeners by region and country if `platform='spotify'`).
     """
-    metadata = sc.artist.get_local_streaming_audience(
-        artist_uuid,
-        platform=platform,
-        start_date=start_date.isoformat(),
-        end_date=end_date.isoformat(),
-    )
-    return metadata
+    try:
+        metadata = sc.artist.get_local_streaming_audience(
+            artist_uuid,
+            platform=platform,
+            start_date=start_date.isoformat(),
+            end_date=end_date.isoformat(),
+        )
+        return metadata
+    except Exception as e:
+        print(
+            f"Failed to fetch {platform} data for UUID {artist_uuid} and range {start_date.isoformat()} - {end_date.isoformat()} due to exception:\n{e}"
+        )
 
 
 @flow(name="sc-artists-local-streaming-audience", log_prints=True)
@@ -56,5 +61,5 @@ if __name__ == "__main__":
     fetch_local_streaming_audience_for_artists.deploy(
         "api",
         work_pool_name="Docker",
-        image=create_image_config("sc-artists-local-streaming-audience", "v1.0"),
+        image=create_image_config("sc-artists-local-streaming-audience", "v1.1"),
     )
