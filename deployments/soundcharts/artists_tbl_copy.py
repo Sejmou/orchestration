@@ -18,4 +18,5 @@ copy_data_flow.deploy(
             k8s_view_name="soundcharts.data_artists",
         ).model_dump(),
     ),
+    job_variables={"image_pull_policy": "IfNotPresent"},
 )
