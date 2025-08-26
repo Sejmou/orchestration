@@ -26,6 +26,25 @@ def create_client(creds: ClickHouseCredentials) -> ClickHouseClient:
     )
 
 
+def query_pl_df(query: str, ch_client: ClickHouseClient):
+    """
+    A workaround for getting data from ClickHouse into a Polars dataframe (not natively supported by ClickHouse Python client from clickhouse_connect)
+    if one or more result column data types aren't compatible with ch_client.query_arrow()
+    """
+    import polars as pl
+
+    res = ch_client.query(query)
+    # in case of non-empty result, convert binary strings to regular strings
+    if len(res.result_columns) > 0:
+        for i, col in enumerate(res.result_columns):
+            if isinstance(col[0], bytes):
+                res.result_columns[i] = [item.decode("utf-8") for item in col]  # type: ignore
+
+    df = pl.DataFrame(res.result_columns)
+    df.columns = res.column_names
+    return df
+
+
 def store_clickhouse_secrets():
     """
     Store ClickHouse configuration variables as Prefect secrets.
