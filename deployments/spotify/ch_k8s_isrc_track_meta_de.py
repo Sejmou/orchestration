@@ -109,7 +109,7 @@ SELECT
 FROM (
     SELECT
       replaceRegexpAll(isrc, '[-\\s]', '') AS isrc,
-      -- pick the earliest ID; fall back to lexicographically first in case of a tie
+      -- pick the earliest ID, fall back to lexicographically first in case of a tie
       argMin(id, (observed_at, id)) AS id
     FROM spotify.data_track_id_meta_de
     WHERE length(isrc) = 12 AND isrc NOT IN (
