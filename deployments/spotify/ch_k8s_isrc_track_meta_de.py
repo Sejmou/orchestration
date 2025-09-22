@@ -6,6 +6,15 @@ from flows.clickhouse.run_queries import run_queries, QueryMeta
 # TODO: fetch code from data repo (atm, code is duplicated there) or find some other solution for deduplication of logic
 _sql_code = """
 /*
+  This script computes/updates `spotify.data_isrc_track_meta_de`, and, as a byproduct, `spotify.data_most_streamed_track_id_per_isrc`.
+
+  `spotify.data_isrc_track_meta_de` contains metadata for tracks identified by their ISRCs, while `spotify.data_most_streamed_track_id_per_isrc` holds the most streamed track ID for each ISRC.
+
+  It is supposed to be run on a schedule on the ClickHouse server on Kubernetes, to make sure the data remains up-to-date.
+  As refreshable materialized views don't work there at the time of this writing, workarounds have been implemented.
+*/
+
+/*
   Pt. 1: update tbl holding most streamed track IDs per ISRC
   NOTE: this would be a refreshable materialized view normally, but those are broken on ClickHouse on Kubernetes
 */
@@ -16,7 +25,7 @@ ORDER BY isrc
 AS
 SELECT isrc, argMax(track_id, streams) AS track_id, max(streams) AS track_id_streams FROM (
     SELECT isrc, track_id, sum(streams) AS streams
-    FROM spotify.total_streams_de_at_ch_by_isrc_and_track_id
+    FROM spotify.total_streams_dach_by_isrc_and_track_id
     GROUP BY isrc, track_id
 )
 GROUP BY isrc;
@@ -66,10 +75,12 @@ CREATE TABLE spotify.tmp_data_isrc_track_meta_de (
     observed_at  DateTime
 ) ORDER BY isrc;
 
--- fill temp table with new data
+-- first, fill temp table with data for ISRCs that are already in spotify.data_most_streamed_track_id_per_isrc
 INSERT INTO spotify.tmp_data_isrc_track_meta_de
 SELECT
-  s.isrc AS isrc,
+  -- use ISRCs from spotify.data_most_streamed_track_id_per_isrc as those are already normalized
+  s.isrc AS isrc, 
+  -- fill the rest of the metadata from spotify.data_track_id_meta_de
   id,
   relinked_to_id,
   name,
@@ -83,15 +94,15 @@ SELECT
   track_number,
   disc_number,
   preview_url,
-  observed_at,
+  observed_at
 FROM spotify.data_track_id_meta_de t
 JOIN spotify.data_most_streamed_track_id_per_isrc s
 ON t.id = s.track_id;
 
--- insert ISRCs not existing in spotify.data_most_streamed_track_id_per_isrc
+-- then, insert data for ISRCs not existing in spotify.data_most_streamed_track_id_per_isrc as well
 INSERT INTO spotify.tmp_data_isrc_track_meta_de
 SELECT
-  replaceRegexpAll(t.isrc, '[-\\s]', '') AS isrc,
+  upper(replaceRegexpAll(t.isrc, '[-\\s]', '')) AS isrc,  -- ISRCs in raw Spotify data may contain dashes/spaces or lowercase letters; normalize them
   t.id,
   t.relinked_to_id,
   t.name,
@@ -108,7 +119,7 @@ SELECT
   t.observed_at
 FROM (
     SELECT
-      replaceRegexpAll(isrc, '[-\\s]', '') AS isrc,
+      upper(replaceRegexpAll(isrc, '[-\\s]', '')) AS isrc, -- ISRCs in raw Spotify data may contain dashes/spaces or lowercase letters; normalize them
       -- pick the earliest ID, fall back to lexicographically first in case of a tie
       argMin(id, (observed_at, id)) AS id
     FROM spotify.data_track_id_meta_de
@@ -143,5 +154,5 @@ if __name__ == "__main__":
             "server": "k8s",
         },
         work_pool_name="Docker",
-        image=create_image_config("spotify-ch-k8s-isrc-track-meta-de", "v1.1"),
+        image=create_image_config("spotify-ch-k8s-isrc-track-meta-de", "v1.2"),
     )
