@@ -9,30 +9,39 @@ ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-# Step 1: Copy only dependency files first (for Docker cache optimization)
+# copy only dependency files first (for Docker cache optimization)
 COPY pyproject.toml uv.lock ./
 
-# Step 2: Install dependencies *only* (won't trigger cache bust if code changes)
+# change to the worker dir
+WORKDIR /app/workers/ai_image_detection
+
+# install dependencies *only* (won't trigger cache bust if code changes)
 RUN uv sync --locked --no-install-project --no-dev
 
-# Step 3: Copy the rest of the project (your source code, etc.)
+# change back to the project root
+WORKDIR /app
+
+# copy the rest of the project (source code, etc.)
 COPY . .
 
-# Step 4: Install your code as a package with dependencies (no dev)
+# change to the worker dir again
+WORKDIR /app/workers/ai_image_detection
+
+# install worker code as a package with dependencies (no dev)
 RUN uv sync --locked --no-dev
 
 # ---- Stage 2: final ----
 FROM python:3.13-slim-bookworm
 
-# change to the worker dir
-WORKDIR /app/workers/ai_image_detection
+# change to root dir first
+WORKDIR /app
 
-# Step 5: Copy the built virtualenv and source from builder
+# copy the built virtualenv and source from builder
 COPY --from=builder /app /app
 
-# Step 6: Place executables at front of PATH
+# place executables at front of PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Step 7: Run uv run main.py on container start
-CMD ["uv", "run", "main.py"]
+# change to the worker dir again
+WORKDIR /app/workers/ai_image_detection
 
