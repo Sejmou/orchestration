@@ -17,22 +17,16 @@ COPY workers/ai_image_detection/pyproject.toml ./workers/ai_image_detection/
 # copy flow-utils lib (whole directory, incl. source code)
 COPY lib/flow-utils ./
 
-# change to the worker dir
-WORKDIR /app/workers/ai_image_detection
-
 # install dependencies *only* (won't trigger cache bust if code changes)
 RUN uv sync --locked --no-install-project --no-dev
 
 # change back to the project root
 WORKDIR /app
 
-# copy the rest of the project (source code, etc.)
-COPY . .
+# copy the full worker code
+COPY workers/ai_image_detection ./
 
-# change to the worker dir again
-WORKDIR /app/workers/ai_image_detection
-
-# install worker code as a package with dependencies (no dev)
+# install code as a package with dependencies (no dev)
 RUN uv sync --locked --no-dev
 
 # ---- Stage 2: final ----
