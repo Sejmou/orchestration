@@ -18,7 +18,7 @@ DATA_DIR = "./tmp/prefect_task_data"
 class RunMetaConfig(BaseModel):
     metadata: dict
     """
-    Additional metadata about a data processingrun to be uploaded to S3. Arbitrary, JSON-serializable data.
+    Additional metadata about a data processing run to be uploaded to S3. Arbitrary, JSON-serializable data.
     """
 
     s3_prefix: str
