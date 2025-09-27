@@ -1,7 +1,7 @@
 from prefect import flow, task
 from prefect.runtime import flow_run
 
-from utils.scraping import fetch_and_upload_data
+from utils.scraping import process_and_upload_data
 from utils.apis.soundcharts import SoundChartsCredentials, create_client
 from utils.flow_deployment import create_image_config
 
@@ -31,13 +31,13 @@ def fetch_artists_by_platform_ids(platform: str, identifiers: list[str | int]):
             "Could not get flow run ID (required for storing data locally before uploading to S3)"
         )
 
-    fetch_and_upload_data(
+    process_and_upload_data(
         inputs=identifiers,
-        fetch_fn=lambda identifier: fetch_soundchart_artist_by_platform_id(
+        processing_fn=lambda identifier: fetch_soundchart_artist_by_platform_id(
             platform=platform, identifier=identifier
         ),
         flow_run_id=flow_run_id,
-        s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/by-platform/{platform}/v2.9",
+        outputs_s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/by-platform/{platform}/v2.9",
     )
 
 

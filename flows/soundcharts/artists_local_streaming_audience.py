@@ -1,6 +1,6 @@
 from typing import Literal
 from prefect import flow, task
-from utils.scraping import fetch_and_upload_data
+from utils.scraping import process_and_upload_data
 from prefect.runtime import flow_run
 from datetime import date
 
@@ -48,13 +48,13 @@ def fetch_local_streaming_audience_for_artists(
         raise ValueError(
             "Could not get flow run ID (required for storing data locally before uploading to S3)"
         )
-    fetch_and_upload_data(
+    process_and_upload_data(
         inputs=artist_uuids,
-        fetch_fn=lambda uuid: fetch_artist_local_streaming_audience(
+        processing_fn=lambda uuid: fetch_artist_local_streaming_audience(
             uuid, platform=platform, start_date=start_date, end_date=end_date
         ),
         flow_run_id=flow_run_id,
-        s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/streaming/{platform}/v2",
+        outputs_s3_prefix=f"soundcharts/raw-api-data-by-endpoint-and-version/artist/streaming/{platform}/v2",
     )
 
 
