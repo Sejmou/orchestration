@@ -17,6 +17,7 @@ from transformers import Pipeline, pipeline
 from prefect_aws import S3Bucket
 from prefect import flow
 
+from utils.flow_deployment import create_image_config
 from utils.scraping import RunMetaConfig, process_and_upload_data
 
 
@@ -185,7 +186,7 @@ def get_file_extension_from_format(image: PILImage):
     return format_to_extension.get(image.format, ".jpg")
 
 
-@flow(log_prints=True)
+@flow(name="sp-ai-image-detection", log_prints=True)
 def run_ai_image_detection_and_upload_results(
     image_urls: list[str],
     entity_type: Literal["artists", "albums"],
@@ -239,11 +240,8 @@ def run_ai_image_detection_and_upload_results(
 
 
 if __name__ == "__main__":
-    # run_ai_image_detection_and_upload_results(
-    #     image_urls=[
-    #         "https://i.scdn.co/image/ab6761610000e5eb7ed4dda02d4c3427995cbb7d",
-    #     ],
-    #     entity_type="artist",
-    # )
-
-    run_ai_image_detection_and_upload_results.serve()
+    run_ai_image_detection_and_upload_results.deploy(
+        "api",
+        work_pool_name="Docker",
+        image=create_image_config("sp-ai-image-detection", "v1.0"),
+    )
