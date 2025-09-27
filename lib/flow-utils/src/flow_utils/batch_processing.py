@@ -9,8 +9,8 @@ import shutil
 from pydantic import BaseModel
 from contextlib import ExitStack
 
-from zstd_utils import compress_file
-from public_ip import get_public_ip
+from .zstd_utils import compress_file
+from .public_ip import get_public_ip
 
 DATA_DIR = "./tmp/prefect_task_data"
 
