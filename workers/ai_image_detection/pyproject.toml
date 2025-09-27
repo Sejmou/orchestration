@@ -9,3 +9,6 @@ dependencies = [
     "pillow>=11.3.0",
     "transformers[torch]>=4.56.2",
 ]
+
+[tool.uv.sources]
+flow_utils = { workspace = true }
