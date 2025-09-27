@@ -18,7 +18,7 @@ COPY workers/ai_image_detection/pyproject.toml ./workers/ai_image_detection/
 COPY lib/flow-utils ./
 
 # install dependencies *only* (won't trigger cache bust if code changes)
-RUN uv sync --locked --no-install-project --no-dev
+RUN uv sync --locked --no-install-project --no-dev --package ai_image_detection
 
 # change back to the project root
 WORKDIR /app
@@ -26,13 +26,12 @@ WORKDIR /app
 # copy the full worker code
 COPY workers/ai_image_detection ./
 
-# install code as a package with dependencies (no dev)
-RUN uv sync --locked --no-dev
+# install full code for worker package with dependencies (no dev)
+RUN uv sync --locked --no-dev --package ai_image_detection
 
 # ---- Stage 2: final ----
 FROM python:3.13-slim-bookworm
 
-# change to root dir first
 WORKDIR /app
 
 # copy the built virtualenv and source from builder
@@ -40,7 +39,4 @@ COPY --from=builder /app /app
 
 # place executables at front of PATH
 ENV PATH="/app/.venv/bin:$PATH"
-
-# change to the worker dir again
-WORKDIR /app/workers/ai_image_detection
 
