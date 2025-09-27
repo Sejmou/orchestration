@@ -1,0 +1,3 @@
+# Temporary location for not properly configured libs
+
+I'm in the process of understanding how the workspaces system in uv works (apps vs. libs). The code in the subfolders here should become libraries later, but I don't understand how to configure the pyproject.toml and stuff correctly yet (uv docs are really quite confusing, or rather, unfortunately incomplete - there's no complete example to follow afaik).
