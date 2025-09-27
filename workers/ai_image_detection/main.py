@@ -243,5 +243,11 @@ if __name__ == "__main__":
     run_ai_image_detection_and_upload_results.deploy(
         "api",
         work_pool_name="Docker",
-        image=create_image_config("sp-ai-image-detection", "v1.0"),
+        image=create_image_config(
+            flow_identifier="sp-ai-image-detection",
+            version="v1.0",
+            # need to navigate to root dir where Dockerfile is created
+            # TODO: find smarter approach
+            dockerfile_path="../../Dockerfile",
+        ),
     )

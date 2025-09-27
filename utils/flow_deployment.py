@@ -1,7 +1,9 @@
 from prefect.docker import DockerImage
 
 
-def create_image_config(flow_identifier: str, version: str) -> DockerImage:
+def create_image_config(
+    flow_identifier: str, version: str, dockerfile_path: str = "Dockerfile"
+) -> DockerImage:
     """
     Create a Docker image configuration for flow deployment (producing images that extend from the project-wide base Dockerfile).
 
@@ -11,5 +13,5 @@ def create_image_config(flow_identifier: str, version: str) -> DockerImage:
     """
     return DockerImage(
         f"sejmou/sejmou-private:prefect-{flow_identifier}-{version}",
-        dockerfile="Dockerfile",
+        dockerfile=dockerfile_path,
     )
