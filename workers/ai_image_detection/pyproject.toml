@@ -1,0 +1,11 @@
+[project]
+name = "ai-image-detection"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "imagehash>=4.3.2",
+    "pillow>=11.3.0",
+    "transformers[torch]>=4.56.2",
+]

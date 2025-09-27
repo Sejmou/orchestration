@@ -16,8 +16,8 @@ from transformers import Pipeline, pipeline
 from prefect_aws import S3Bucket
 from prefect import flow
 
-from utils.flow_deployment import create_image_config
-from utils.scraping import RunMetaConfig, process_and_upload_data
+from flow_utils.flow_deployment import create_image_config
+from flow_utils.batch_processing import RunMetaConfig, process_and_upload_data
 
 
 def extract_pipeline_metadata(pipe: Pipeline, seed_used: int):
