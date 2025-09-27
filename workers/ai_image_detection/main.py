@@ -240,4 +240,13 @@ def run_ai_image_detection_and_upload_results(
 
 
 if __name__ == "__main__":
-    run_ai_image_detection_and_upload_results.deploy("api", work_pool_name="Default")
+    # NOTE: run this from the project root!
+    run_ai_image_detection_and_upload_results.deploy(
+        "api",
+        work_pool_name="Docker",
+        image=create_image_config(
+            flow_identifier="sp-ai-image-detection",
+            version="v1.0",
+            dockerfile_path="Dockerfile_ai_image_detection",
+        ),
+    )
