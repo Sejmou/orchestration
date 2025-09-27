@@ -11,7 +11,6 @@ from datetime import datetime
 import sys
 import platform
 import os
-import GPUtil
 import requests
 from transformers import Pipeline, pipeline
 from prefect_aws import S3Bucket
@@ -119,23 +118,6 @@ def get_hardware_info():
             gpu_details.append(gpu_info)
 
         hardware_info["gpu_details"] = gpu_details
-
-        # Try to get additional GPU info using GPUtil if available
-        try:
-            gpus = GPUtil.getGPUs()
-            for i, gpu in enumerate(gpus):
-                if i < len(gpu_details):
-                    hardware_info["gpu_details"][i].update(
-                        {
-                            "driver_version": gpu.driver,
-                            "memory_used_mb": gpu.memoryUsed,
-                            "memory_total_mb": gpu.memoryTotal,
-                            "load_percent": gpu.load * 100,
-                            "temperature_c": gpu.temperature,
-                        }
-                    )
-        except:
-            pass
     else:
         hardware_info["gpu_available"] = False
 
