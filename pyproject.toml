@@ -1,0 +1,11 @@
+[project]
+name = "orchestration"
+version = "0.1.0"
+description = "Various orchestration tasks and related code, separated into packages that share common dependencies and add specific ones as needed (to the best of my knowledge)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
