@@ -244,6 +244,10 @@ if __name__ == "__main__":
         "api",
         work_pool_name="Docker",
         image=create_image_config(
-            flow_identifier="sp-ai-image-detection", version="v1.0"
+            flow_identifier="sp-ai-image-detection",
+            version="v1.0",
+            # need to navigate to root dir where Dockerfile for this flow is located
+            # (have to copy uv.lock from root but parent dir reference (../../uv.lock) doesn't work from the dir of this file)
+            dockerfile_path="../../Dockerfile_ai_image_detection",
         ),
     )

@@ -10,13 +10,13 @@ ENV UV_PYTHON_DOWNLOADS=0
 WORKDIR /app
 
 # Step 1: Copy only dependency files first (for Docker cache optimization)
-COPY pyproject.toml ../../uv.lock ./
+COPY ./workers/ai_image_detection/pyproject.toml uv.lock ./
 
 # Step 2: Install dependencies *only* (won't trigger cache bust if code changes)
 RUN uv sync --locked --no-install-project --no-dev
 
 # Step 3: Copy the rest of the project (your source code, etc.)
-COPY . .
+COPY ./workers/ai_image_detection .
 
 # Step 4: Install your code as a package with dependencies (no dev)
 RUN uv sync --locked --no-dev
@@ -33,4 +33,4 @@ COPY --from=builder /app /app
 
 # Step 6: Place executables at front of PATH
 ENV PATH="/app/.venv/bin:$PATH"
-    
+
