@@ -46,7 +46,7 @@ def _preprocess_for_write(data, timestamp_key: str = "observed_at") -> dict | li
     return data
 
 
-@task(name="Process data and write results to file")
+@task(name="Process data and write results to file", log_prints=True)
 def _process_inputs_and_write_outputs[T](
     inputs: list[T],
     processing_fn: Callable[[T], Any],
