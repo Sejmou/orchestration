@@ -169,7 +169,7 @@ def get_file_extension_from_format(image: PILImage):
 
 @flow(name="sp-ai-image-detection", log_prints=True)
 def run_ai_image_detection_and_upload_results(
-    image_urls: list[str],
+    ids_and_image_urls: list[tuple[str, str]],
     entity_type: Literal["artists", "albums"],
     store_images_in_s3: bool = True,
 ):
@@ -186,6 +186,7 @@ def run_ai_image_detection_and_upload_results(
     metadata = extract_pipeline_metadata(pipe, seed_used)
 
     def run_inference(image_url: str):
+        entity_id, image_url = image_url
         img_bytes = requests.get(image_url).content
         img = Image.open(BytesIO(img_bytes))
         sha256_hash = hashlib.sha256(img_bytes).hexdigest()
@@ -197,6 +198,7 @@ def run_ai_image_detection_and_upload_results(
 
         inference_result = pipe(image_url)
         pred_dict = {
+            "id": entity_id,
             "image_url": image_url,
             "sha256_hash": sha256_hash,
             "avg_hash": avg_hash,
@@ -208,7 +210,7 @@ def run_ai_image_detection_and_upload_results(
         return pred_dict
 
     process_and_upload_data(
-        inputs=image_urls,
+        inputs=ids_and_image_urls,
         processing_fn=run_inference,
         outputs_s3_prefix=f"spotify/ai-image-detection/results/{entity_type}",
         failures_s3_prefix=f"spotify/ai-image-detection/failures/{entity_type}",
@@ -227,7 +229,7 @@ if __name__ == "__main__":
         work_pool_name="Docker",
         image=create_image_config(
             flow_identifier="sp-ai-image-detection",
-            version="v1.0",
+            version="v1.1",
             dockerfile_path="Dockerfile_ai_image_detection",
         ),
         build=False,
