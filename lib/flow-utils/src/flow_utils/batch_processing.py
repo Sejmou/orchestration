@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 from prefect import task
 from prefect.runtime.flow_run import get_id
@@ -74,6 +74,10 @@ def _process_inputs_and_write_outputs[T](
         f_in = stack.enter_context(open(processed_inputs_fp, "a"))
         f_out = stack.enter_context(open(processed_data_fp, "a"))
         f_in_failed = stack.enter_context(open(failed_inputs_fp, "a"))
+        last_log_time = datetime.now()
+        log_interval = timedelta(seconds=10)
+        num_successful = 0
+        num_failed = 0
         for input_el in inputs:
             try:
                 processed_data = processing_fn(input_el)
@@ -91,6 +95,7 @@ def _process_inputs_and_write_outputs[T](
                 f_out.flush()
                 f_in.write(str(input_el) + "\n")
                 f_in.flush()
+                num_successful += 1
             except Exception as e:
                 print(f"Error processing input {input_el}: {e}")
                 if isinstance(input_el, dict) or isinstance(input_el, list):
@@ -104,6 +109,12 @@ def _process_inputs_and_write_outputs[T](
 
                 f_in_failed.write(str(input_el) + "\n")
                 f_in_failed.flush()
+                num_failed += 1
+            if datetime.now() - last_log_time > log_interval:
+                print(
+                    f"Processed {num_successful + num_failed} of {len(inputs)} inputs ({num_successful} successful, {num_failed} failed)"
+                )
+                last_log_time = datetime.now()
 
     return processed_data_fp, failed_inputs_fp
 
@@ -133,6 +144,7 @@ def process_and_upload_data[T](
     bucket = S3Bucket.load("s3-bucket")
 
     flow_run_id = get_id()
+    assert flow_run_id is not None, "Could not get flow run ID"
     flow_run_data_dir = os.path.join(DATA_DIR, flow_run_id)
     if not os.path.exists(flow_run_data_dir):
         os.makedirs(flow_run_data_dir)

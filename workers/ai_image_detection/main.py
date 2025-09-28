@@ -252,7 +252,7 @@ if __name__ == "__main__":
         work_pool_name="Docker",
         image=create_image_config(
             flow_identifier="sp-ai-image-detection",
-            version="v1.3",
+            version="v1.4",
             dockerfile_path="Dockerfile_ai_image_detection",
         ),
         build=False,
