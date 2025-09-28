@@ -10,9 +10,9 @@ from argparse import ArgumentParser
 
 from prefect_aws import S3Bucket
 
-from utils.zstd import compress_file
-from utils.public_ip import get_public_ip
-from utils.scraping import DATA_DIR
+from flow_utils.zstd_utils import compress_file
+from flow_utils.public_ip import get_public_ip
+from flow_utils.batch_processing import DATA_DIR
 
 
 def docker_copy(container_id: str, source_path: str, target_path: str) -> None:
