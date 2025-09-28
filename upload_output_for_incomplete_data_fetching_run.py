@@ -85,7 +85,7 @@ def upload_incompletely_fetched_data(container_id: str, s3_prefix: str):
             f"Expected exactly one flow run subdirectory, found {len(flow_run_dirs)}: {flow_run_dirs}"
         )
     flow_run_id = flow_run_dirs[0]
-    flow_data_path = os.path.join(host_dir_path, flow_run_id, "fetched.jsonl")
+    flow_data_path = os.path.join(host_dir_path, flow_run_id, "processed_outputs.jsonl")
     output_last_modified = datetime.fromtimestamp(
         os.path.getmtime(flow_data_path), tz=timezone.utc
     )
