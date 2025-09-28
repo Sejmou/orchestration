@@ -230,4 +230,6 @@ if __name__ == "__main__":
             version="v1.0",
             dockerfile_path="Dockerfile_ai_image_detection",
         ),
+        build=False,
+        push=False,
     )
