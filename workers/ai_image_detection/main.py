@@ -197,7 +197,7 @@ def run_ai_image_detection_and_upload_results(
     metadata = extract_pipeline_metadata(pipe, seed_used)
 
     def run_inference(item: EntityIdAndImageUrl):
-        entity_id, image_url = item.id, item.image_url
+        entity_id, image_url = item.id, str(item.image_url)
         img_bytes = requests.get(image_url).content
         img = Image.open(BytesIO(img_bytes))
         sha256_hash = hashlib.sha256(img_bytes).hexdigest()
@@ -207,7 +207,7 @@ def run_ai_image_detection_and_upload_results(
             image_s3_key = f"spotify/ai-image-detection/images/{sha256_hash}{get_file_extension_from_format(img)}"
             s3_bucket.upload_from_file_object(BytesIO(img_bytes), to_path=image_s3_key)
 
-        inference_result = pipe(image_url)
+        inference_result = pipe(img)
         pred_dict = {
             "id": entity_id,
             "image_url": image_url,
@@ -234,13 +234,25 @@ def run_ai_image_detection_and_upload_results(
 
 
 if __name__ == "__main__":
+    # test locally
+    # run_ai_image_detection_and_upload_results(
+    #     inputs=[
+    #         EntityIdAndImageUrl(
+    #             id="24NB7jXxw1l6NKzfOnYB5b",
+    #             image_url="https://i.scdn.co/image/ab6761610000e5ebce057f6ff99b56dd8b341b24",
+    #         )
+    #     ],
+    #     entity_type="artists",
+    #     store_images_in_s3=True,
+    # )
+    # deploy
     # NOTE: run this from the project root!
     run_ai_image_detection_and_upload_results.deploy(
         "api",
         work_pool_name="Docker",
         image=create_image_config(
             flow_identifier="sp-ai-image-detection",
-            version="v1.2",
+            version="v1.3",
             dockerfile_path="Dockerfile_ai_image_detection",
         ),
         build=False,
