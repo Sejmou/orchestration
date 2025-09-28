@@ -46,6 +46,7 @@ services:
       PREFECT_SERVER_CONCURRENCY_LEASE_STORAGE: prefect_redis.lease_storage
       PREFECT_REDIS_MESSAGING_HOST: redis
       PREFECT_REDIS_MESSAGING_PORT: "6379"
+      PREFECT_UI_API_URL: http://prefect-api:4200
     ports:
       - "4200-4202:4200" # Maps to different ports for each replica
 
