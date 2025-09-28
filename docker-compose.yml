@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: prefect
+      POSTGRES_DB: prefect
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -h localhost -U $$POSTGRES_USER
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7
+
+  migrate:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: prefect server database upgrade -y
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+
+  prefect-api:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    deploy:
+      replicas: 3
+    command: prefect server start --host 0.0.0.0 --no-services
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+      PREFECT_API_DATABASE_MIGRATE_ON_START: "false"
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_SERVER_EVENTS_CAUSAL_ORDERING: prefect_redis.ordering
+      PREFECT_SERVER_CONCURRENCY_LEASE_STORAGE: prefect_redis.lease_storage
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: "6379"
+    ports:
+      - "4200-4202:4200" # Maps to different ports for each replica
+
+  prefect-background:
+    image: prefecthq/prefect:3-latest
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: prefect server services start
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+      PREFECT_API_DATABASE_MIGRATE_ON_START: "false"
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_SERVER_EVENTS_CAUSAL_ORDERING: prefect_redis.ordering
+      PREFECT_SERVER_CONCURRENCY_LEASE_STORAGE: prefect_redis.lease_storage
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: "6379"
+
+volumes:
+  postgres_data:
