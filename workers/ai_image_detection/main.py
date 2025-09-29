@@ -15,10 +15,13 @@ import requests
 from transformers import Pipeline, pipeline
 from flow_utils.flow_deployment import create_image_config
 from flow_utils.batch_processing import RunMetaConfig, process_and_upload_data
-from prefect_aws import S3Bucket
 from prefect import flow
+from prefect_aws import AwsCredentials, S3Bucket
 from pydantic import BaseModel
 from pydantic import HttpUrl
+import boto3
+from types_boto3_s3 import Client as S3Client
+from botocore.exceptions import ClientError
 
 
 class EntityIdAndImageUrl(BaseModel):
@@ -165,7 +168,7 @@ def set_reproducible_seeds(seed=42):
     return seed
 
 
-def get_file_extension_from_format(image: PILImage):
+def get_file_extension_from_format(image: PILImage) -> str:
     format_to_extension = {
         "JPEG": ".jpg",
         "PNG": ".png",
@@ -175,7 +178,40 @@ def get_file_extension_from_format(image: PILImage):
         "WEBP": ".webp",
         "ICO": ".ico",
     }
-    return format_to_extension.get(image.format, ".jpg")
+    assert image.format is not None, "Image format is None"
+    try:
+        return format_to_extension[image.format]
+    except KeyError:
+        raise ValueError(f"Got unexpected Pillow image format: {image.format}")
+
+
+def create_s3_client() -> S3Client:
+    """Create a boto3 S3 client using the existing s3-creds Prefect configuration"""
+    # Load the existing AWS credentials from Prefect
+    aws_creds = cast(AwsCredentials, AwsCredentials.load("s3-creds"))
+    assert aws_creds.aws_secret_access_key is not None, "AWS secret access key is None"
+    return cast(
+        S3Client,
+        boto3.client(
+            "s3",
+            aws_access_key_id=aws_creds.aws_access_key_id,
+            aws_secret_access_key=aws_creds.aws_secret_access_key.get_secret_value(),
+            endpoint_url=aws_creds.aws_client_parameters.endpoint_url,
+        ),
+    )
+
+
+def upload_to_s3(
+    s3_client: S3Client, bucket_name: str, file_obj: BytesIO, s3_key: str
+) -> None:
+    """Upload a file object to S3"""
+    try:
+        file_obj.seek(0)  # Reset file pointer to beginning
+        s3_client.upload_fileobj(file_obj, Bucket=bucket_name, Key=s3_key)
+        # print(f"Successfully uploaded {s3_key} to S3 bucket {bucket_name}")
+    except ClientError as e:
+        print(f"Error uploading {s3_key} to S3: {e}")
+        raise
 
 
 @flow(name="sp-ai-image-detection", log_prints=True)
@@ -184,7 +220,11 @@ def run_ai_image_detection_and_upload_results(
     entity_type: Literal["artists", "albums"],
     store_images_in_s3: bool = True,
 ):
-    s3_bucket = cast(S3Bucket, S3Bucket.load("s3-bucket"))
+    # Load the S3 bucket object (includes bucket name, which is actually the only thing we need from it)
+    # NOTE: while we _could_ use the s3_bucket_obj directly for file uploads, it adds a log for every single image upload, which is really unncessary - hence, we replace it with a plain boto3 client
+    bucket_name = cast(S3Bucket, S3Bucket.load("s3-bucket")).bucket_name
+    # Create a boto3 client
+    s3_client = create_s3_client()
     model_name = "Organika/sdxl-detector"
 
     # Set seeds first for reproducibility
@@ -205,7 +245,7 @@ def run_ai_image_detection_and_upload_results(
         phash = str(imagehash.phash(img))
         if store_images_in_s3:
             image_s3_key = f"spotify/ai-image-detection/images/{sha256_hash}{get_file_extension_from_format(img)}"
-            s3_bucket.upload_from_file_object(BytesIO(img_bytes), to_path=image_s3_key)
+            upload_to_s3(s3_client, bucket_name, BytesIO(img_bytes), image_s3_key)
 
         inference_result = pipe(img)
         pred_dict = {
@@ -245,14 +285,16 @@ if __name__ == "__main__":
     #     entity_type="artists",
     #     store_images_in_s3=True,
     # )
+
     # deploy
     # NOTE: run this from the project root!
+    # always update to specific version tag
     run_ai_image_detection_and_upload_results.deploy(
         "api",
         work_pool_name="Docker",
         image=create_image_config(
             flow_identifier="sp-ai-image-detect",
-            version="latest",
+            version="v1.5",
             dockerfile_path="Dockerfile_ai_image_detection",
             private_repo=False,
         ),

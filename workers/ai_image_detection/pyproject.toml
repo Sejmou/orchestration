@@ -5,10 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "boto3>=1.40.18",
     "flow-utils",
     "imagehash>=4.3.2",
     "pillow>=11.3.0",
     "transformers[torch]>=4.56.2",
+    "types-boto3[essential]>=1.40.40",
 ]
 
 [tool.uv.sources]
