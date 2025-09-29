@@ -251,9 +251,10 @@ if __name__ == "__main__":
         "api",
         work_pool_name="Docker",
         image=create_image_config(
-            flow_identifier="sp-ai-image-detection",
-            version="v1.4",
+            flow_identifier="sp-ai-image-detect",
+            version="latest",
             dockerfile_path="Dockerfile_ai_image_detection",
+            private_repo=False,
         ),
         build=False,
         push=False,
