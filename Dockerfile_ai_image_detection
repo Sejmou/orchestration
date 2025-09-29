@@ -16,6 +16,9 @@ COPY pyproject.toml uv.lock ./
 COPY workers/ai_image_detection/pyproject.toml ./workers/ai_image_detection/
 # copy flow-utils lib (whole directory, incl. source code)
 COPY lib/flow-utils ./lib/flow-utils
+# copy setup code (whole directory, incl. source code)
+COPY setup ./setup
+
 
 # install dependencies *only* (won't trigger cache bust if code changes)
 RUN uv sync --locked --no-install-project --no-dev --package ai_image_detection
