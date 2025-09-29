@@ -22,6 +22,7 @@
       ansible.builtin.git:
         repo: "{{ git_repo }}"
         dest: "{{ clone_path }}"
+        version: reorganization-workspaces
         update: yes
 
     - name: Run uv sync for package setup
