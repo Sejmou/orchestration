@@ -46,9 +46,12 @@
       register: tmux_session_check
       ignore_errors: true
 
-    - name: Start uv worker in tmux session if not running
+    - name: Kill existing uv worker tmux session if it exists
+      ansible.builtin.shell: "tmux kill-session -t uv_worker"
+      when: tmux_session_check.rc == 0
+
+    - name: Start uv worker in tmux session
       ansible.builtin.shell: >
         tmux new-session -d -s uv_worker '{{ uv_prefect_command }}'
       args:
         chdir: "{{ clone_path }}"
-      when: tmux_session_check.rc != 0

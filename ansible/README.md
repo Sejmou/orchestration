@@ -28,7 +28,7 @@ ansible-playbook -i inventory.ini configure_new_worker_hosts.yml
 Make sure to move the worker hosts that still need to be configured to the `to_configure` group in the `inventory.ini` file.
 
 ## (Re-)Launching the worker hosts
-The `./launch_worker.yml` playbook ensures that each configured worker host has the required dependencies (including `uv`, `tmux`, and the latest version of the repository), installs them if missing, and then starts a Prefect worker process inside a persistent `tmux` session. This allows the worker to run in the background and automatically reconnect to the Prefect work pool. You can then also manually SSH into the worker host and run `tmux a` to attach to the running session.
+The `./launch_worker.yml` playbook ensures that each configured worker host has `uv` and `tmux` installed, and that the latest version of the repository is cloned, copies the `.env` file from the control node and then starts a Prefect worker process inside a persistent `tmux` session (restarting it if it already exists). This allows the worker to run in the background and automatically reconnect to the Prefect work pool. You can then also manually SSH into the worker host and run `tmux a` to attach to the running session.
 
 Analogously to the `configure_new_worker_hosts.yml` playbook, you can run it via the following command:
 
