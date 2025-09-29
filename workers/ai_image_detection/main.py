@@ -296,7 +296,6 @@ if __name__ == "__main__":
             flow_identifier="sp-ai-image-detection",
             version="v1.5",
             dockerfile_path="Dockerfile_ai_image_detection",
-            private_repo=True,
         ),
         build=False,
         push=False,
