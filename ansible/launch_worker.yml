@@ -1,0 +1,48 @@
+---
+- name: Deploy uv worker with tmux
+  hosts: worker_hosts
+  become: yes
+  vars:
+    git_repo: "https://github.com/Sejmou/orchestration.git"
+    clone_path: "/opt/prefect-orchestration"
+    uv_command: "uv"
+    uv_prefect_command: 'uv run prefect worker start --pool "Docker" --work-queue "default" --limit 1'
+
+  tasks:
+    - name: Check if uv command exists
+      ansible.builtin.command: "command -v {{ uv_command }}"
+      register: uv_installed
+      ignore_errors: true
+
+    - name: Install uv if missing
+      ansible.builtin.command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
+      when: uv_installed.failed
+
+    - name: Setup Git Repo
+      ansible.builtin.git:
+        repo: "{{ git_repo }}"
+        dest: "{{ clone_path }}"
+        update: yes
+
+    - name: Run uv sync for package setup
+      ansible.builtin.command: "{{ uv_command }} sync --package setup"
+      args:
+        chdir: "{{ clone_path }}"
+
+    - name: Ensure tmux is installed
+      ansible.builtin.apt:
+        name: tmux
+        state: present
+        update_cache: yes
+
+    - name: Check if uv worker tmux session exists
+      ansible.builtin.shell: "tmux has-session -t uv_worker"
+      register: tmux_session_check
+      ignore_errors: true
+
+    - name: Start uv worker in tmux session if not running
+      ansible.builtin.shell: >
+        tmux new-session -d -s uv_worker '{{ uv_prefect_command }}'
+      args:
+        chdir: "{{ clone_path }}"
+      when: tmux_session_check.rc != 0
