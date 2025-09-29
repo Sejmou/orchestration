@@ -1,9 +1,3 @@
-"""
-This is a helper script to setup blocks on the Prefect server for use in flows.
-
-See also: https://docs.prefect.io/v3/concepts/blocks
-"""
-
 from dotenv import load_dotenv
 import os
 from prefect_aws import AwsCredentials, AwsClientParameters, S3Bucket
