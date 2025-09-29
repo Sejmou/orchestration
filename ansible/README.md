@@ -25,6 +25,9 @@ The `./configure_new_worker_hosts.yml` playbook sets up basic tools on new worke
 ansible-playbook -i inventory.ini configure_new_worker_hosts.yml
 ```
 
+> Note: in my specific setup, I had VMs which only needed the tmux install (everything else was already installed), hence there's also a playbook for that called `install_tmux.yml`.
+
+
 Make sure to move the worker hosts that still need to be configured to the `to_configure` group in the `inventory.ini` file.
 
 ## (Re-)Launching the worker hosts

@@ -1,22 +1,20 @@
 ---
 - name: Deploy uv worker with tmux
   hosts: worker_hosts
-  become: yes
   vars:
     git_repo: "https://github.com/Sejmou/orchestration.git"
-    clone_path: "/opt/prefect-orchestration"
-    uv_command: "uv"
-    uv_prefect_command: 'uv sync --package setup && uv run prefect worker start --pool "Docker" --work-queue "default" --limit 1'
+    clone_path: "~/prefect-orchestration"
+    uv_prefect_command: '~/.local/bin/uv sync --package setup && ~/.local/bin/uv run prefect worker start --pool "Docker" --work-queue "default" --limit 1'
 
   tasks:
-    - name: Check if uv command exists
-      ansible.builtin.command: "command -v {{ uv_command }}"
-      register: uv_installed
-      ignore_errors: true
+    - name: Check if uv executable exists
+      ansible.builtin.stat:
+        path: "~/.local/bin/uv"
+      register: uv_stat
 
-    - name: Install uv if missing
-      ansible.builtin.command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
-      when: uv_installed.failed
+    - name: Install uv if not installed
+      ansible.builtin.shell: "curl -LsSf https://astral.sh/uv/install.sh | sh"
+      when: not uv_stat.stat.exists
 
     - name: Setup Git Repo
       ansible.builtin.git:
@@ -26,7 +24,7 @@
         update: yes
 
     - name: Run uv sync for package setup
-      ansible.builtin.command: "{{ uv_command }} sync --package setup"
+      ansible.builtin.shell: "~/.local/bin/uv sync --package setup"
       args:
         chdir: "{{ clone_path }}"
 
@@ -36,23 +34,17 @@
         dest: "{{ clone_path }}/.env"
         mode: '0644'
 
-    - name: Ensure tmux is installed
-      ansible.builtin.apt:
-        name: tmux
-        state: present
-        update_cache: yes
-
-    - name: Check if uv worker tmux session exists
+    - name: Check if uv_worker tmux session exists
       ansible.builtin.shell: "tmux has-session -t uv_worker"
       register: tmux_session_check
       ignore_errors: true
 
-    - name: Kill existing uv worker tmux session if it exists
+    - name: Kill existing uv_worker tmux session if it exists
       ansible.builtin.shell: "tmux kill-session -t uv_worker"
       when: tmux_session_check.rc == 0
 
-    - name: Start uv worker in tmux session
-      ansible.builtin.shell: >
-        tmux new-session -d -s uv_worker '{{ uv_prefect_command }}'
+    - name: Create uv_worker tmux session running uv_prefect_command
+      ansible.builtin.shell: 'tmux new-session -d -s uv_worker "{{ uv_prefect_command }}"'
+      when: tmux_session_check.rc != 0
       args:
         chdir: "{{ clone_path }}"

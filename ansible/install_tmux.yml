@@ -1,0 +1,15 @@
+- hosts: to_configure
+  gather_facts: yes
+  become: yes
+
+  vars_prompt:
+    - name: ansible_become_password
+      prompt: "Enter your sudo password (required for tmux installation)"
+      private: yes
+
+  tasks:
+    - name: Ensure tmux is installed
+      ansible.builtin.apt:
+        name: tmux
+        state: present
+        update_cache: yes
