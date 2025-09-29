@@ -33,7 +33,7 @@ class EntityIdAndImageUrl(BaseModel):
     image_url: HttpUrl
 
 
-def extract_pipeline_metadata(pipe: Pipeline, seed_used: int):
+def extract_pipeline_metadata(pipe: Pipeline):
     """Extract comprehensive reproducibility metadata from a HuggingFace pipeline"""
 
     model = pipe.model
@@ -78,8 +78,6 @@ def extract_pipeline_metadata(pipe: Pipeline, seed_used: int):
 
     # Hardware specifications
     metadata["hardware"] = get_hardware_info()
-
-    metadata["random_seed_used"] = seed_used
 
     # Pipeline-specific components
     if hasattr(pipe, "tokenizer") and pipe.tokenizer:
@@ -149,25 +147,6 @@ def get_hardware_info():
     return hardware_info
 
 
-def set_reproducible_seeds(seed=42):
-    """Set seeds for reproducibility - call this before creating your pipeline"""
-    import random
-    import numpy as np
-
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        # For deterministic behavior (may impact performance)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-
-    return seed
-
-
 def get_file_extension_from_format(image: PILImage) -> str:
     format_to_extension = {
         "JPEG": ".jpg",
@@ -227,14 +206,11 @@ def run_ai_image_detection_and_upload_results(
     s3_client = create_s3_client()
     model_name = "Organika/sdxl-detector"
 
-    # Set seeds first for reproducibility
-    seed_used = set_reproducible_seeds(42)
-
     # Create pipeline
     pipe = pipeline("image-classification", model=model_name)
 
     # Extract metadata
-    metadata = extract_pipeline_metadata(pipe, seed_used)
+    metadata = extract_pipeline_metadata(pipe)
 
     def run_inference(item: EntityIdAndImageUrl):
         entity_id, image_url = item.id, str(item.image_url)
@@ -294,7 +270,7 @@ if __name__ == "__main__":
         work_pool_name="Docker",
         image=create_image_config(
             flow_identifier="sp-ai-image-detection",
-            version="v1.5",
+            version="v1.6",
             dockerfile_path="Dockerfile_ai_image_detection",
             private_repo=False,
         ),
