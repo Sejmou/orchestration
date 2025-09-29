@@ -29,6 +29,12 @@
       args:
         chdir: "{{ clone_path }}"
 
+    - name: Copy local .env file to remote clone path
+      ansible.builtin.copy:
+        src: "./.env"
+        dest: "{{ clone_path }}/.env"
+        mode: '0644'
+
     - name: Ensure tmux is installed
       ansible.builtin.apt:
         name: tmux
