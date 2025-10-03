@@ -1,0 +1,8 @@
+---
+- name: Checks if the worker is running by looking for the uv_worker tmux session
+  hosts: all
+
+  tasks:
+    - name: Check if uv_worker tmux session exists
+      ansible.builtin.shell: "tmux has-session -t uv_worker"
+      register: tmux_session_check

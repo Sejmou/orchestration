@@ -1,0 +1,14 @@
+---
+- name: Execute Docker System Prune Across All Hosts
+  hosts: all
+  gather_facts: no
+  become: no
+  
+  tasks:
+    - name: Run docker system prune with confirmation
+      shell: echo y | docker system prune
+      register: prune_result
+      
+    - name: Display prune results
+      debug:
+        msg: "{{ inventory_hostname }}: {{ prune_result.stdout }}"
